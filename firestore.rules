@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// Generado por la fabrica desde backend/blueprint.yaml. No se edita a mano.
+//
+// Deny by default: lo que no aparece aqui esta cerrado, y cada entidad declara
+// explicitamente quien lee, quien crea, quien edita y quien borra. Ningun
+// `allow read, write: if true`, ni siquiera temporalmente para probar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /memberships/{docId} {
+      allow read: if request.auth.uid == resource.data.user_id || request.auth.token.role in ['moderator', 'admin'];
+      allow create: if (request.auth.token.role in ['admin'])
+                       && request.resource.data.keys().hasOnly(['user_id', 'nivel', 'estado', 'vence_en', 'stripe_subscription_id', 'alta_en'])
+                       && request.auth != null;
+      allow update: if (request.auth.token.role in ['admin'])
+                       && request.resource.data.keys().hasOnly(['user_id', 'nivel', 'estado', 'vence_en', 'stripe_subscription_id', 'alta_en'])
+                       && request.auth != null;
+      allow delete: if false;
+    }
+
+    match /spaces/{docId} {
+      allow read: if request.auth != null;
+      allow create: if (request.auth.token.role in ['admin'])
+                       && request.resource.data.keys().hasOnly(['nombre', 'descripcion', 'nivel_minimo', 'orden', 'activo'])
+                       && request.auth != null;
+      allow update: if (request.auth.token.role in ['admin'])
+                       && request.resource.data.keys().hasOnly(['nombre', 'descripcion', 'nivel_minimo', 'orden', 'activo'])
+                       && request.auth != null;
+      allow delete: if false;
+    }
+
+    match /posts/{docId} {
+      allow read: if request.auth.uid == resource.data.author_id || (request.auth != null && resource.data.estado == 'publicado');
+      allow create: if (request.auth.uid == request.resource.data.author_id || request.auth.token.role in ['moderator', 'admin'])
+                       && request.resource.data.keys().hasOnly(['author_id', 'space_id', 'titulo', 'cuerpo', 'estado', 'fijado', 'creado_en'])
+                       && request.auth != null;
+      allow update: if (request.auth.uid == resource.data.author_id || request.auth.token.role in ['moderator', 'admin'])
+                       && request.resource.data.keys().hasOnly(['author_id', 'space_id', 'titulo', 'cuerpo', 'estado', 'fijado', 'creado_en'])
+                       && request.auth != null;
+      allow delete: if false;
+    }
+
+    match /comments/{docId} {
+      allow read: if (request.auth != null && resource.data.estado == 'publicado') || request.auth.uid == resource.data.author_id;
+      allow create: if (request.auth.uid == request.resource.data.author_id || request.auth.token.role in ['moderator', 'admin'])
+                       && request.resource.data.keys().hasOnly(['post_id', 'author_id', 'cuerpo', 'estado', 'creado_en'])
+                       && request.auth != null;
+      allow update: if (request.auth.uid == resource.data.author_id || request.auth.token.role in ['moderator', 'admin'])
+                       && request.resource.data.keys().hasOnly(['post_id', 'author_id', 'cuerpo', 'estado', 'creado_en'])
+                       && request.auth != null;
+      allow delete: if false;
+    }
+
+    match /moderation_queue/{docId} {
+      allow read: if request.auth.token.role in ['moderator', 'admin'];
+      allow create: if (request.auth.token.role in ['moderator'])
+                       && request.resource.data.keys().hasOnly(['objeto_tipo', 'objeto_id', 'motivo_ia', 'confianza', 'estado', 'decidido_por', 'decidido_en'])
+                       && request.auth != null;
+      allow update: if (request.auth.token.role in ['moderator'])
+                       && request.resource.data.keys().hasOnly(['objeto_tipo', 'objeto_id', 'motivo_ia', 'confianza', 'estado', 'decidido_por', 'decidido_en'])
+                       && request.auth != null;
+      allow delete: if false;
+    }
+
+    match /digests/{docId} {
+      allow read: if request.auth.token.role in ['admin'];
+      allow create: if (false)
+                       && request.resource.data.keys().hasOnly(['periodo_inicio', 'periodo_fin', 'enviado_en', 'destinatarios', 'contenido_json'])
+                       && request.auth != null;
+      allow update: if (false)
+                       && request.resource.data.keys().hasOnly(['periodo_inicio', 'periodo_fin', 'enviado_en', 'destinatarios', 'contenido_json'])
+                       && request.auth != null;
+      allow delete: if false;
+    }
+
+    // Cualquier coleccion no declarada en el blueprint no existe para nadie.
+    match /{documento=**} {
+      allow read, write: if false;
+    }
+  }
+}

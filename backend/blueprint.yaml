@@ -1,0 +1,93 @@
+# Producto 4 del catalogo -- Members Circle.
+#
+# El motor: reunir. Lo que hace solo es triar lo publicado para que un moderador vea solo
+# lo dudoso, cobrar la cuota, cortar el acceso al vencer, y mandar el resumen semanal que
+# devuelve a la gente. Sin ese resumen cualquier comunidad se apaga en seis semanas; con
+# el, es un producto.
+#
+# No es una red social vacia: es una comunidad privada de pago, para quien YA tiene la
+# gente. Con "post" renombrado a "anuncio" y mensajeria entre dos partes, el mismo motor
+# es un marketplace de nicho -- dos pieles, un motor.
+proyecto:
+  nombre: "Members Circle"
+  formato: webapp
+  paleta: 5
+  tipografia: 5
+  efecto: 5
+  roles: [admin, moderator, member]
+  entidades:
+    - nombre: memberships
+      campos: [user_id, nivel, estado, vence_en, stripe_subscription_id, alta_en]
+      quien_lee: "el propio user, moderator y admin"
+      quien_escribe: "admin; el estado lo mueve el webhook de pago, nunca el navegador"
+      acceso:
+        lee: [{"propio": "user_id"}, {"rol": ["moderator", "admin"]}]
+        escribe: [{"rol": ["admin"]}]
+        borra: []
+    - nombre: spaces
+      campos: [nombre, descripcion, nivel_minimo, orden, activo]
+      quien_lee: "cualquier member cuyo nivel alcance el nivel_minimo"
+      quien_escribe: "solo admin"
+      acceso:
+        lee: [{"autenticado": true}]
+        escribe: [{"rol": ["admin"]}]
+        borra: []
+    - nombre: posts
+      campos: [author_id, space_id, titulo, cuerpo, estado, fijado, creado_en]
+      quien_lee: "members con acceso a ese space y estado publicado; el autor ve el suyo siempre"
+      quien_escribe: "el autor mientras este en borrador; moderator puede ocultar"
+      acceso:
+        lee: [{"propio": "author_id"}, {"autenticado": true, "si": ["estado", "publicado"]}]
+        escribe: [{"propio": "author_id"}, {"rol": ["moderator", "admin"]}]
+        borra: []
+    - nombre: comments
+      campos: [post_id, author_id, cuerpo, estado, creado_en]
+      quien_lee: "quien puede leer el post, y solo los publicados"
+      quien_escribe: "el autor; moderator puede ocultar"
+      acceso:
+        lee: [{"autenticado": true, "si": ["estado", "publicado"]}, {"propio": "author_id"}]
+        escribe: [{"propio": "author_id"}, {"rol": ["moderator", "admin"]}]
+        borra: []
+    - nombre: moderation_queue
+      campos: [objeto_tipo, objeto_id, motivo_ia, confianza, estado, decidido_por, decidido_en]
+      quien_lee: "moderator y admin"
+      quien_escribe: "el triaje automatico lo crea; solo moderator lo decide"
+      acceso:
+        lee: [{"rol": ["moderator", "admin"]}]
+        escribe: [{"rol": ["moderator"]}]
+        borra: []
+    - nombre: digests
+      campos: [periodo_inicio, periodo_fin, enviado_en, destinatarios, contenido_json]
+      quien_lee: "admin"
+      quien_escribe: "solo el proceso programado"
+      acceso:
+        lee: [{"rol": ["admin"]}]
+        escribe: [{"sistema": true}]
+        borra: []
+  acciones_core:
+    - "unirse pagando una cuota mensual y entrar a los spaces de su nivel"
+    - "publicar y comentar dentro de un space permitido"
+    - "triar automaticamente lo publicado y encolar solo lo dudoso"
+    - "moderar la cola: publicar, ocultar o expulsar, con el motivo"
+    - "cortar el acceso cuando la membresia vence y devolverlo al cobrar"
+    - "enviar el resumen semanal de lo que se han perdido"
+    - "que nadie vea un space por encima de su nivel"
+  pantallas:
+    - portada de la comunidad con los spaces del miembro
+    - hilo de un space con sus publicaciones
+    - detalle de una publicacion con comentarios
+    - cola de moderacion
+    - panel del admin con miembros, niveles y cobros
+    - alta y pago de la membresia
+  fuera_de_alcance:
+    - mensajeria privada entre miembros
+    - directos y video
+    - aplicacion movil nativa
+    - buscador de texto completo sobre todo el historial
+    - traduccion automatica de las publicaciones
+  landing_keywords:
+    - paid community platform
+    - membership community software
+    - private forum with payments
+    - community moderation tools
+  datos_sensibles: false

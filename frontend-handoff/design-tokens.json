@@ -1,0 +1,28 @@
+{
+  "color": {
+    "bg": "#FFF5F7",
+    "surface": "#FFFFFF",
+    "ink": "#2D2A32",
+    "accent": "#FF6F91",
+    "accent2": "#5FD0C4"
+  },
+  "colorDark": {
+    "bg": "#FFF5F7",
+    "surface": "#FFFFFF",
+    "ink": "#2D2A32",
+    "accent": "#FF6F91",
+    "accent2": "#5FD0C4"
+  },
+  "font": {
+    "heading": "Fredoka",
+    "headingWeight": 600,
+    "body": "Nunito Sans",
+    "bodyWeight": 400
+  },
+  "radius": "20px",
+  "shadow": "0 4px 16px rgba(0,0,0,.12)",
+  "motion": {
+    "durationMs": 220,
+    "easing": "cubic-bezier(.34,1.3,.64,1)"
+  }
+}
