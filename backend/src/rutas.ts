@@ -32,15 +32,20 @@ async function perfilAutor(uid: string): Promise<Autor> {
     .where('author_id', '==', uid)
     .where('creado_en', '>=', Timestamp.fromDate(inicioDia))
     .get()
+  // Por autor, no por comunidad.
+  //
+  // La primera version contaba las publicaciones ocultadas de TODA la comunidad, sin
+  // filtrar por quien las escribio: con dos ocultadas, cualquiera quedaba marcado como
+  // reincidente y todo pasaba por la cola. El contador decia "2" y no significaba nada.
   const sanciones = await db
     .collection('moderation_queue')
-    .where('decidido_por', '!=', null)
-    .where('objeto_tipo', '==', 'post')
-    .limit(50)
+    .where('autor_id', '==', uid)
+    .where('estado', '==', 'oculto')
+    .limit(20)
     .get()
   return {
     antiguedadDias: Math.floor((Date.now() - desde.getTime()) / (24 * 60 * 60 * 1000)),
-    sanciones: sanciones.docs.filter((d) => d.data()['estado'] === 'oculto').length,
+    sanciones: sanciones.size,
     hoy: hoy.size,
   }
 }
@@ -84,6 +89,7 @@ export function montaRutas(app: Express) {
         await db.collection('moderation_queue').add({
           objeto_tipo: 'post',
           objeto_id: post.id,
+          autor_id: quien.uid,
           motivo_ia: r.motivo,
           confianza: veredicto.confianza,
           estado: 'pendiente',
