@@ -1,0 +1,17 @@
+:root {
+  --bg: #FFF5F7;
+  --superficie: #FFFFFF;
+  --tinta: #2D2A32;
+  --acento: #FF6F91;
+  --acento2: #5FD0C4;
+
+  --radio: 20px;
+  --sombra: 0 4px 16px rgba(0,0,0,.12);
+  --duracion: 220ms;
+  --curva: cubic-bezier(.34,1.3,.64,1);
+
+  --fuente-titular: 'Fredoka', system-ui, sans-serif;
+  --peso-titular: 600;
+  --fuente-cuerpo: 'Nunito Sans', system-ui, sans-serif;
+  --peso-cuerpo: 400;
+}
