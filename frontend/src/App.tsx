@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, ErrorApi } from './api'
 import { AvisoDemo, Dato, Estado as Pastilla, Marco, Panel, Pestanas, Tabla, Tarjeta } from './piezas'
-import type { Accion, Cola, EnCola, Espacio, Publicacion, Resumen } from './tipos'
+import type { Accion, Categoria, Cola, EnCola, Espacio, Publicacion, Resumen } from './tipos'
 
 /**
  * El panel de Members Circle.
@@ -32,6 +32,23 @@ function cuando(t?: { _seconds?: number }) {
   if (minutos < 60) return `${minutos}m ago`
   if (minutos < 60 * 48) return `${Math.round(minutos / 60)}h ago`
   return new Date(t._seconds * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+/**
+ * Las categorias en el idioma del producto.
+ *
+ * Las claves siguen en espanol porque asi se llaman en el motor y en Firestore. Lo que
+ * lee el moderador, no: una cola que pone "datos_personales" delante de una persona
+ * inglesa es el producto a medio terminar.
+ */
+const CATEGORIAS: Record<Categoria, string> = {
+  limpio: 'clean',
+  datos_personales: 'personal data',
+  amenaza: 'threat',
+  ilegal: 'illegal',
+  spam: 'spam',
+  tono: 'tone',
+  fuera_de_tema: 'off topic',
 }
 
 const ACCIONES: Record<Accion, { texto: string; tipo: 'bien' | 'aviso' | 'mal' }> = {
@@ -199,7 +216,8 @@ function ColaVista({ token, abre }: { token: string; abre: (item: EnCola) => voi
 
 function ForoVista({ token }: { token: string }) {
   const espacios = useCarga<{ espacios: Espacio[] }>('/espacios', token)
-  const posts = useCarga<{ publicaciones: Publicacion[] }>('/publicaciones', token)
+  // /publicaciones (POST) es donde se publica; el feed de lectura es otra ruta.
+  const posts = useCarga<{ publicaciones: Publicacion[] }>('/publicaciones/recientes', token)
 
   return (
     <>
@@ -344,7 +362,7 @@ function DetalleCola({ item, cierra }: { item: EnCola; cierra: () => void }) {
       </div>
 
       <div className="fila">
-        <Dato etiqueta="Flagged as">{item.categoria.replace(/_/g, ' ')}</Dato>
+        <Dato etiqueta="Flagged as">{CATEGORIAS[item.categoria]}</Dato>
         <Dato etiqueta="Confidence">{Math.round(item.confianza * 100)}%</Dato>
       </div>
 

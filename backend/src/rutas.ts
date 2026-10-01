@@ -2,8 +2,9 @@ import type { Express, Request, Response } from 'express'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { asyncHandler } from './lib/asyncHandler.js'
 import { requireRole, verificarAuth } from './lib/auth.js'
-import { decide, ordenaCola, desborde, type Autor, type EnCola, type Veredicto } from './motor/moderacion.js'
+import { decide, type Autor, type Veredicto } from './motor/moderacion.js'
 import { resumenesDeLaSemana, type Miembro, type Publicacion } from './motor/resumen.js'
+import { montaPanel } from './panel.js'
 
 /**
  * Las rutas de Members Circle.
@@ -102,39 +103,11 @@ export function montaRutas(app: Express) {
     }),
   )
 
-  /** La cola del moderador, ordenada: lo retenido primero, que es lo que tiene a alguien esperando. */
-  app.get(
-    '/moderacion/cola',
-    requireRole(['moderator', 'admin']),
-    asyncHandler(async (_req: Request, res: Response) => {
-      const db = getFirestore()
-      const pendientes = await db
-        .collection('moderation_queue')
-        .where('estado', '==', 'pendiente')
-        .limit(300)
-        .get()
-
-      const items: EnCola[] = await Promise.all(
-        pendientes.docs.map(async (d) => {
-          const post = await db.collection('posts').doc(String(d.data()['objeto_id'])).get()
-          const retenido = post.exists && post.data()!['estado'] === 'retenido'
-          return {
-            id: d.id,
-            accion: retenido ? 'retener' : 'publicar_y_revisar',
-            creado_en: (post.data()?.['creado_en'] as { toMillis?: () => number })?.toMillis?.() ?? 0,
-            motivo: String(d.data()['motivo_ia'] ?? ''),
-          }
-        }),
-      )
-
-      res.status(200).json({
-        cola: ordenaCola(items),
-        // Se dice en voz alta en vez de esconderlo tras un "50+": una cola que crece mas
-        // rapido de lo que se vacia significa que hay un ataque o un umbral mal puesto.
-        desbordadas: desborde(items),
-      })
-    }),
-  )
+  // La cola, los espacios, el feed y el resumen viven en panel.ts. Lo que anaden y no
+  // esta en ninguna coleccion es el contexto del autor: cuantos dias lleva la cuenta y
+  // cuantas sanciones tiene. El mismo parrafo de una cuenta de un dia y de una de dos
+  // anyos no significa lo mismo.
+  montaPanel(app)
 
   /** El proceso semanal. Solo salen los que tienen algo que leer. */
   app.post(

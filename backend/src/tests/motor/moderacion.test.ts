@@ -77,7 +77,7 @@ describe('moderacion: la duda se resuelve publicando', () => {
     const nueva: Autor = { antiguedadDias: 0, sanciones: 0, hoy: LIMITE_NOVATO }
     const r = decide({ categoria: 'limpio', confianza: 0.99 }, nueva)
     expect(r.accion).toBe('retener')
-    expect(r.motivo).toContain('publicaciones')
+    expect(r.motivo).toContain('posts today')
   })
 
   it('una cuenta de hoy con una sola publicacion no se toca', () => {

@@ -34,6 +34,23 @@ export type Categoria =
   | 'fuera_de_tema'
 
 /** Lo que no se puede deshacer si sale. Solo esto retiene. */
+/**
+ * Las categorias, en el idioma del producto.
+ *
+ * El motivo que escribe esta funcion no se queda en un registro: acaba en la cola del
+ * moderador, delante de una persona. Las claves siguen en espanol porque asi se llaman
+ * en Firestore y en las reglas; lo que lee el cliente, no.
+ */
+export const ENINGLES: Record<Categoria, string> = {
+  limpio: 'clean',
+  datos_personales: 'personal data',
+  amenaza: 'threat',
+  ilegal: 'illegal',
+  spam: 'spam',
+  tono: 'tone',
+  fuera_de_tema: 'off topic',
+}
+
 export const GRAVES: Categoria[] = ['datos_personales', 'amenaza', 'ilegal', 'spam']
 
 export type Veredicto = { categoria: Categoria; confianza: number; nota?: string }
@@ -73,7 +90,7 @@ export function decide(v: Veredicto, autor: Autor): Resultado {
   // Lo grave con confianza razonable se retiene. No hace falta certeza para retener
   // veinte minutos algo que, si sale, no se puede recoger.
   if (grave && v.confianza >= 0.5) {
-    return { accion: 'retener', motivo: `${v.categoria} (${v.confianza.toFixed(2)})`, encolar: true }
+    return { accion: 'retener', motivo: `${ENINGLES[v.categoria]} (${v.confianza.toFixed(2)})`, encolar: true }
   }
 
   // Cuenta nueva pasada de vueltas: retener no por lo que dice, sino por el patron.
@@ -82,30 +99,30 @@ export function decide(v: Veredicto, autor: Autor): Resultado {
   if (autor.antiguedadDias < 1 && autor.hoy >= LIMITE_NOVATO) {
     return {
       accion: 'retener',
-      motivo: `cuenta de hoy con ${autor.hoy} publicaciones`,
+      motivo: `new account, ${autor.hoy} posts today`,
       encolar: true,
     }
   }
 
   // Reincidente: se publica igual, pero un moderador lo ve siempre.
   if (autor.sanciones >= 2) {
-    return { accion: 'publicar_y_revisar', motivo: `autor con ${autor.sanciones} sanciones`, encolar: true }
+    return { accion: 'publicar_y_revisar', motivo: `author has ${autor.sanciones} prior sanctions`, encolar: true }
   }
 
   if (grave) {
     // Grave pero el modelo muy poco seguro. Publicar y que lo mire alguien.
-    return { accion: 'publicar_y_revisar', motivo: `posible ${v.categoria}, sin certeza`, encolar: true }
+    return { accion: 'publicar_y_revisar', motivo: `possibly ${ENINGLES[v.categoria]}, not certain`, encolar: true }
   }
 
   if (v.categoria !== 'limpio') {
-    return { accion: 'publicar_y_revisar', motivo: v.categoria, encolar: true }
+    return { accion: 'publicar_y_revisar', motivo: ENINGLES[v.categoria], encolar: true }
   }
 
   if (v.confianza < CONFIANZA_MINIMA) {
-    return { accion: 'publicar_y_revisar', motivo: `confianza ${v.confianza.toFixed(2)}`, encolar: true }
+    return { accion: 'publicar_y_revisar', motivo: `confidence ${v.confianza.toFixed(2)}`, encolar: true }
   }
 
-  return { accion: 'publicar', motivo: 'limpio', encolar: false }
+  return { accion: 'publicar', motivo: 'clean', encolar: false }
 }
 
 /**

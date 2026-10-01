@@ -7,14 +7,15 @@
 
 export type Marca = { _seconds: number }
 
+/** Las mismas siete que el motor. Inventarse una aqui pinta una pastilla vacia. */
 export type Categoria =
   | 'limpio'
-  | 'ruido'
-  | 'ofensivo'
   | 'datos_personales'
   | 'amenaza'
   | 'ilegal'
   | 'spam'
+  | 'tono'
+  | 'fuera_de_tema'
 
 export type Accion = 'publicar' | 'publicar_y_revisar' | 'retener'
 
